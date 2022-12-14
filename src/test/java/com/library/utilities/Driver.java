@@ -3,89 +3,39 @@ package com.library.utilities;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.safari.SafariDriver;
 
-import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 public class Driver {
-    // a Singleton driver
-    // creating a private constructor, so we are closing access to the object of this class. from outside any classes
+
+    /*
+     Creating a private constructor, so we are closing access to the object of this class
+     from outside of any classes
+     */
     private Driver(){}
 
-    // making our 'driver' instance private because we do not want it to be reachable from outside any class
-    // we make it static because we dont want to create an object and for it to be used before anything else. not to mention we will use it in a static method
+    /*
+    Making our 'driver' instance private, so that it is not reachable from outside of any class
+    We make it static, because we want it to run before anyting else,
+    also we will use it in static method
+     */
     private static InheritableThreadLocal<WebDriver> driverPool = new InheritableThreadLocal<>();
 
+    /*
+    Create re-usable utility method which will return same driver instance when we call it.
+     */
+    public static WebDriver getDriver(){
 
-    // creating a reusable method which will return the same driver instance when we call it
-    public static WebDriver getDriverPool(){
+        if(driverPool.get() == null){  // if driver/browser was never opened
 
+            String browserType = ConfigurationReader.getProperty("browser");
 
         /*
-        what do we need to run SG?
-
-            - remote browser
-
-            - add system env to ready browser type
-                String browserType = "";
-            if (System.getProperty("BROWSER") == null){
-                browserType = ConfigurationReader.getProperty("browser");
-            }else {
-                browserType = System.getProperty("BROWSER");
-            }
+        Depending on the browserType our switch statement will determine
+        to open specific type of browser/driver
          */
-
-
-
-
-        if (driverPool.get() == null){
-            String browserType = "";
-            if (System.getProperty("BROWSER") == null){
-                browserType = ConfigurationReader.getProperty("browser");
-            }else {
-                browserType = System.getProperty("BROWSER");
-            }
-
-
-
-            switch (browserType.toLowerCase()){
-                case "remote-chrome":
-                    try {
-                        // assign your grid server address
-                        String gridAddress = "3.93.188.212"; //TODO note that if the AWS instance is terminated this ip will not work since it doesnt not exist anymore
-                        URL url = new URL("http://"+ gridAddress + ":4444/wd/hub");
-                        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-                        desiredCapabilities.setBrowserName("chrome");
-                        driverPool.set(new RemoteWebDriver(url, desiredCapabilities));
-                        //driverPool.set(new RemoteWebDriver(new URL("http://0.0.0.0:4444/wd/hub"),desiredCapabilities));
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-
-
-                case "remote-firefox":
-                    try {
-                        // assign your grid server address
-                        String gridAddress = "3.93.188.212"; //TODO note that if the AWS instance is terminated this ip will not work since it doesnt not exist anymore
-                        URL url = new URL("http://"+ gridAddress + ":4444/wd/hub");
-                        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-                        desiredCapabilities.setBrowserName("firefox");
-                        driverPool.set(new RemoteWebDriver(url, desiredCapabilities));
-                        //driverPool.set(new RemoteWebDriver(new URL("http://0.0.0.0:4444/wd/hub"),desiredCapabilities));
-
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    break;
-
-
+            switch(browserType){
                 case "chrome":
                     WebDriverManager.chromedriver().setup();
                     driverPool.set(new ChromeDriver());
@@ -98,32 +48,20 @@ public class Driver {
                     driverPool.get().manage().window().maximize();
                     driverPool.get().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
                     break;
-                case "edge":
-                    WebDriverManager.edgedriver().setup();
-                    driverPool.set(new EdgeDriver());
-                    driverPool.get().manage().window().maximize();
-                    driverPool.get().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-                    break;
-                case "safari":
-                    WebDriverManager.safaridriver().setup();
-                    driverPool.set(new SafariDriver());
-                    driverPool.get().manage().window().maximize();
-                    driverPool.get().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-                    break;
-                default:
-                    System.out.println("Driver does not exist, Options are: " + "\nchrome" + "\nfirefox" + "\nedge" + "\nsafari");
             }
         }
 
-        // same driver instance will return everytime we call driver
+        // Same driver instance will be returned every time we call Driver.getDriver() method
         return driverPool.get();
+
     }
 
 
     public static void closeDriver(){
-        if (driverPool.get() !=null){
-            driverPool.get().quit();
+        if(driverPool.get() != null) {
+            driverPool.get().quit(); // this line will kill the session. value will not be null
             driverPool.remove();
         }
     }
+
 }

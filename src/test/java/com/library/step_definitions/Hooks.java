@@ -1,4 +1,5 @@
 package com.library.step_definitions;
+import com.library.utilities.ConfigurationReader;
 import com.library.utilities.DB_Utils;
 
 import com.library.utilities.Driver;
@@ -8,17 +9,22 @@ import io.cucumber.java.Scenario;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 
+import java.util.concurrent.TimeUnit;
+
 public class Hooks {
-    //@Before
+    @Before
     public void setupScenario(){
-        System.out.println("Setting up browser using cucumber @Before each scenario");
+        System.out.println("this is coming from BEFORE");
+        Driver.getDriver().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        Driver.getDriver().manage().window().maximize();
+        Driver.getDriver().get(ConfigurationReader.getProperty("library_url"));
     }
 
 
     @After
     public void teardownScenario(Scenario scenario){
         //if (scenario.isFailed()) {
-        byte[] screenShot = ((TakesScreenshot) Driver.getDriverPool()).getScreenshotAs(OutputType.BYTES);
+        byte[] screenShot = ((TakesScreenshot) Driver.getDriver()).getScreenshotAs(OutputType.BYTES);
         scenario.attach(screenShot, "image/png", scenario.getName());
         // }
 
